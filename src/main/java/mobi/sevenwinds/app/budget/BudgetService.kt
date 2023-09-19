@@ -19,22 +19,29 @@ object BudgetService {
         }
     }
 
-    suspend fun getYearStats(param: BudgetYearParam): BudgetYearStatsResponse = withContext(Dispatchers.IO) {
-        transaction {
-            val query = BudgetTable
-                .select { BudgetTable.year eq param.year }
-                .limit(param.limit, param.offset)
+    suspend fun getYearStats(param: BudgetYearParam): BudgetYearStatsResponse =
+        withContext(Dispatchers.IO) {
+            transaction {
+                val query = BudgetTable
+                    .select { BudgetTable.year eq param.year }
 
-            val total = query.count()
-            val data = BudgetEntity.wrapRows(query).map { it.toResponse() }
+                val total = query.count()
 
-            val sumByType = data.groupBy { it.type.name }.mapValues { it.value.sumOf { v -> v.amount } }
+                val totalData = BudgetEntity.wrapRows(query)
+                    .map { it.toResponse() }
 
-            return@transaction BudgetYearStatsResponse(
-                total = total,
-                totalByType = sumByType,
-                items = data
-            )
+                val sumByType = totalData.groupBy { it.type.name }
+                    .mapValues { it.value.sumOf { v -> v.amount } }
+
+                val limitData = BudgetEntity.wrapRows(query.limit(param.limit, param.offset))
+                    .map { it.toResponse() }
+                    .sortedWith(compareBy(BudgetRecord::month).thenByDescending(BudgetRecord::amount))
+
+                return@transaction BudgetYearStatsResponse(
+                    total = total,
+                    totalByType = sumByType,
+                    items = limitData
+                )
+            }
         }
-    }
 }
