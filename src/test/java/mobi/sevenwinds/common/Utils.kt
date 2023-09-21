@@ -3,6 +3,10 @@ package mobi.sevenwinds.common
 import io.restassured.http.ContentType
 import io.restassured.response.ResponseBodyExtractionOptions
 import io.restassured.specification.RequestSpecification
+import mobi.sevenwinds.app.author.AuthorTable
+import mobi.sevenwinds.app.budget.BudgetTable
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.transactions.transaction
 
 fun RequestSpecification.auth(token: String): RequestSpecification = this
     .header("Authorization", "Bearer $token")
@@ -17,4 +21,11 @@ inline fun <reified T> ResponseBodyExtractionOptions.toResponse(): T {
 
 fun RequestSpecification.When(): RequestSpecification {
     return this.`when`()
+}
+
+fun deleteAllTables() {
+    transaction {
+        BudgetTable.deleteAll()
+        AuthorTable.deleteAll()
+    }
 }

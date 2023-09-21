@@ -1,15 +1,21 @@
 package mobi.sevenwinds.app.budget
 
+import mobi.sevenwinds.app.author.AuthorEntity
+import mobi.sevenwinds.app.author.AuthorRecord
+import mobi.sevenwinds.app.author.AuthorTable
+import mobi.sevenwinds.app.budget.BudgetEntity.Companion.optionalReferrersOn
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.IntIdTable
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.minus
 
 object BudgetTable : IntIdTable("budget") {
     val year = integer("year")
     val month = integer("month")
     val amount = integer("amount")
     val type = enumerationByName("type", 100, BudgetType::class)
+    val author = optReference("author_id", AuthorTable)
 }
 
 class BudgetEntity(id: EntityID<Int>) : IntEntity(id) {
@@ -19,8 +25,15 @@ class BudgetEntity(id: EntityID<Int>) : IntEntity(id) {
     var month by BudgetTable.month
     var amount by BudgetTable.amount
     var type by BudgetTable.type
+    var author by AuthorEntity optionalReferencedOn BudgetTable.author
 
-    fun toResponse(): BudgetRecord {
-        return BudgetRecord(year, month, amount, type)
+    fun toResponse(): BudgetRecordToResponse {
+        return BudgetRecordToResponse(year, month, amount, type)
+    }
+
+    fun toResponseWithAuthor(): BudgetRecordWithAuthor {
+        return BudgetRecordWithAuthor(year, month, amount, type, author?.toResponse())
     }
 }
+
+
