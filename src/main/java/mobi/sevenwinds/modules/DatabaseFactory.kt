@@ -19,14 +19,16 @@ object DatabaseFactory {
         appConfig = config
 
         Database.connect(hikari())
+        val clean = appConfig.property("flyway.clean").getString().toBoolean()
 
         val flyway = Flyway.configure().dataSource(dbUrl, dbUser, dbPassword)
             .locations("classpath:db/migration")
 //            .baselineOnMigrate(true)
+            .cleanDisabled(!clean)
             .outOfOrder(true)
             .load()
 
-        if (appConfig.property("flyway.clean").getString().toBoolean()) {
+        if (clean) {
             flyway.clean() // clean existing tables before migration applying
         }
 

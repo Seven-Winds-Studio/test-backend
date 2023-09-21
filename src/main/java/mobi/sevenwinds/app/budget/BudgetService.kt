@@ -2,6 +2,9 @@ package mobi.sevenwinds.app.budget
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.exposed.sql.Count
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.Sum
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -21,19 +24,37 @@ object BudgetService {
 
     suspend fun getYearStats(param: BudgetYearParam): BudgetYearStatsResponse = withContext(Dispatchers.IO) {
         transaction {
-            val query = BudgetTable
+            val countExp = Count(BudgetTable.id)
+            val sumExp = Sum(BudgetTable.amount, BudgetTable.amount.columnType)
+
+            val totalByType = HashMap<String, Int>()
+            var count = 0
+
+            BudgetTable.slice(BudgetTable.type, sumExp, countExp)
+                .select { BudgetTable.year eq param.year }
+                .groupBy(BudgetTable.type)
+                .map {
+                    val type = it[BudgetTable.type]
+                    val amount = it[sumExp] ?: 0
+
+                    count += it[countExp]
+                    totalByType[type.name] = amount
+                }
+
+            val queryItems = BudgetTable
                 .select { BudgetTable.year eq param.year }
                 .limit(param.limit, param.offset)
+                .orderBy(
+                    BudgetTable.month to SortOrder.ASC,
+                    BudgetTable.amount to SortOrder.DESC,
+                )
 
-            val total = query.count()
-            val data = BudgetEntity.wrapRows(query).map { it.toResponse() }
-
-            val sumByType = data.groupBy { it.type.name }.mapValues { it.value.sumOf { v -> v.amount } }
+            val items = BudgetEntity.wrapRows(queryItems).map { it.toResponse() }
 
             return@transaction BudgetYearStatsResponse(
-                total = total,
-                totalByType = sumByType,
-                items = data
+                total = count,
+                totalByType = totalByType,
+                items = items
             )
         }
     }
