@@ -18,4 +18,4 @@ fun NormalOpenAPIRoute.author() {
 
 data class AuthorCreate(val fullName: String)
 
-data class AuthorRecord(val id: Int, val fullName: String, val creationDate: DateTime)
+data class AuthorRecord(val fullName: String, val creationDate: DateTime)
