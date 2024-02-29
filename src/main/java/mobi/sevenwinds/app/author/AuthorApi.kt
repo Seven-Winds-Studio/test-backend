@@ -7,7 +7,7 @@ import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import org.joda.time.DateTime
 
-fun NormalOpenAPIRoute.budget() {
+fun NormalOpenAPIRoute.author() {
     route("/author") {
         route("/add").post<String, AuthorRecord, String>(info("Добавить автора")) { param, _ ->
             respond(AuthorService.addRecord(param))
