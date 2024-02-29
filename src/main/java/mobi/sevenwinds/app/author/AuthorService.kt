@@ -7,10 +7,10 @@ import org.joda.time.DateTime
 
 object AuthorService {
 
-    suspend fun addRecord(authorName: String): AuthorRecord = withContext(Dispatchers.IO) {
+    suspend fun addRecord(params: AuthorRecord): AuthorRecord = withContext(Dispatchers.IO) {
         transaction {
             return@transaction AuthorEntity.new {
-                name = authorName
+                name = params.name
                 dateTime = DateTime()
             }.toResponse()
         }
