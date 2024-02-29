@@ -33,14 +33,14 @@ data class BudgetRecord(
     val type: BudgetType,
     val authorId: Int? = null,
     val authorName: String? = null,
-    val authorCreatedAt: DateTime? = null
+    val authorCreatedAt: String? = null
 )
 
 data class BudgetYearParam(
     @PathParam("Год") val year: Int,
     @QueryParam("Лимит пагинации") val limit: Int,
     @QueryParam("Смещение пагинации") val offset: Int,
-    @QueryParam("Имя автора") val authorName: String? = null,
+    @QueryParam("Имя автора") val author: String? = null,
 )
 
 class BudgetYearStatsResponse(
