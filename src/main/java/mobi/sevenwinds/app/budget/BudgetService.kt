@@ -31,9 +31,12 @@ object BudgetService {
     suspend fun getYearStats(param: BudgetYearParam): BudgetYearStatsResponse = withContext(Dispatchers.IO) {
         transaction {
 
-            // проверить чувствительность к регистру
             val foundAuthorId = param.author?.let {
                 AuthorEntity.find { AuthorTable.name like it }.singleOrNull()?.id
+            }
+
+            if (param.author != null && foundAuthorId == null) {
+                return@transaction BudgetYearStatsResponse(0, emptyMap(), emptyList())
             }
 
             val query = BudgetTable.select { BudgetTable.year eq param.year }
