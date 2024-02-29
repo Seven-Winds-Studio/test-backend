@@ -12,12 +12,16 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object BudgetService {
     suspend fun addRecord(body: BudgetRecord): BudgetRecord = withContext(Dispatchers.IO) {
         transaction {
+            val foundAuthorId = body.authorId?.let {
+                AuthorEntity.find { AuthorTable.id eq it }.singleOrNull()
+            }?.id
+
             val entity = BudgetEntity.new {
                 this.year = body.year
                 this.month = body.month
                 this.amount = body.amount
                 this.type = body.type
-                this.author = AuthorEntity.find { AuthorTable.id eq body.authorId }.singleOrNull()
+                this.authorId = foundAuthorId
             }
 
             return@transaction entity.toResponse()
@@ -28,7 +32,7 @@ object BudgetService {
         transaction {
 
             // проверить чувствительность к регистру
-            val foundAuthorId = param.authorName?.let {
+            val foundAuthorId = param.author?.let {
                 AuthorEntity.find { AuthorTable.name like it }.singleOrNull()?.id
             }
 
